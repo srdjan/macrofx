@@ -1,0 +1,32 @@
+{
+  "lock": false,
+  "tasks": {
+    "test": "deno test -A",
+    "cli": "deno run -A examples/cli.ts",
+    "etl": "deno run -A examples/etl.ts",
+    "wf": "deno run -A examples/workflow.ts",
+    "ui": "deno run -A examples/ui_ssr_tokens.ts",
+    "testing": "deno run -A examples/testing.ts",
+    "fmt": "deno fmt",
+    "lint": "deno lint"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true
+  }
+}
