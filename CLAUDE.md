@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
+
 ```bash
 deno task test      # Run all tests with -A permissions
 deno task fmt       # Format code (2 spaces, 100 width, double quotes)
@@ -16,6 +17,7 @@ deno task lint      # Lint code with recommended rules
 ```
 
 ### Examples (all require -A permissions)
+
 ```bash
 deno task cli       # Run CLI example with env, cache, retry, timeout macros
 deno task etl       # Run ETL pipeline example
@@ -29,6 +31,7 @@ deno task testing   # Run testing utilities example
 ### Core Pipeline Engine (`core.ts`)
 
 The pipeline operates in distinct phases:
+
 1. **validate** - All matching macros validate the metadata
 2. **resolve** - Build typed capability context from macros (adds properties to context)
 3. **before** - Guards/priming effects (can short-circuit by returning a value)
@@ -37,6 +40,7 @@ The pipeline operates in distinct phases:
 6. **after** - Transform/wrap results or add telemetry
 
 Key types:
+
 - `Macro<Meta, BaseCtx, AddedCtx>` - Defines a macro with lifecycle hooks
 - `Step<Met, BaseCtx, Ms, Out>` - Defines an executable step with metadata
 - `createPipeline()` - Creates a typed pipeline executor from macros array
@@ -74,6 +78,7 @@ All macros follow the pattern of matching metadata fields and optionally adding 
 ## Testing
 
 Tests use Deno's built-in test runner with standard assertions:
+
 ```bash
 deno test -A              # Run all tests
 deno test core_test.ts    # Run specific test file

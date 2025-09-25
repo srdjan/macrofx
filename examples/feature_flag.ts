@@ -27,13 +27,16 @@ const macros = [featureFlagMacro, fallbackMacro] as const;
 const makeBase = (): Base => ({ enabled: new Set(["beta-report"]) });
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, makeBase);
 
-const disabledStep: Step<Meta, Base, typeof macros, Response> = {
+type DisabledMeta = { feature: "new-dashboard" };
+type RiskyMeta = { feature: "beta-report"; fallback: "served cached report" };
+
+const disabledStep: Step<Meta, Base, typeof macros, Response, DisabledMeta> = {
   name: "disabled-feature",
   meta: { feature: "new-dashboard" },
   run: () => ({ ok: true, message: "ran feature code" }),
 };
 
-const riskyStep: Step<Meta, Base, typeof macros, Response> = {
+const riskyStep: Step<Meta, Base, typeof macros, Response, RiskyMeta> = {
   name: "risky-feature",
   meta: { feature: "beta-report", fallback: "served cached report" },
   run: () => {

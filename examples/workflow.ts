@@ -51,7 +51,8 @@ const macros = [authMacro, roleMacro, txMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, () => ({}));
 
 type AdminResult = { ok: true; by: string; mode: "ro" | "rw"; txCommitted: true };
-const adminStep: Step<Meta, Base, typeof macros, AdminResult> = {
+type AdminMeta = { auth: true; role: "admin"; tx: "rw" };
+const adminStep: Step<Meta, Base, typeof macros, AdminResult, AdminMeta> = {
   name: "admin-only",
   meta: { auth: true, role: "admin", tx: "rw" },
   run: ({ user, tx }) => ({

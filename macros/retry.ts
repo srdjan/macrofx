@@ -20,10 +20,34 @@ export async function runWithRetry<T>(
   delayMs = 0,
   signal = isRetrySignal,
 ): Promise<T> {
+  let lastSignal: RetrySignal | undefined;
+
   for (let i = 0; i < times; i++) {
-    const r = await fn().catch((e) => e);
-    if (!signal(r)) return r as T;
+    let value: unknown;
+    let threw = false;
+
+    try {
+      value = await fn();
+    } catch (err) {
+      threw = true;
+      if (signal(err)) {
+        lastSignal = err;
+      } else {
+        throw err;
+      }
+    }
+
+    if (!threw) {
+      if (!signal(value)) return value as T;
+      lastSignal = value;
+    }
+
     if (i < times - 1) await sleep(delayMs);
   }
-  throw new Error("retry: exhausted");
+
+  const finalError = lastSignal?.error ?? new Error("retry: exhausted");
+  if (finalError instanceof Error) throw finalError;
+  throw new Error(typeof finalError === "string" ? finalError : "retry: exhausted", {
+    cause: finalError,
+  });
 }

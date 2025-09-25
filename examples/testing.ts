@@ -22,7 +22,8 @@ const rngMacro = {
 const macros = [fakeClockMacro, rngMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, () => ({}));
 
-const step: Step<Meta, Base, typeof macros, { ts: number; n: number }> = {
+type DeterministicMeta = { fakeClock: number; seed: number };
+const step: Step<Meta, Base, typeof macros, { ts: number; n: number }, DeterministicMeta> = {
   name: "deterministic",
   meta: { fakeClock: 1_700_000_000_000, seed: 42 },
   run: ({ now, random }) => ({ ts: now(), n: Math.round(random() * 1000) }),

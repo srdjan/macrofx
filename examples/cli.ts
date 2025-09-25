@@ -21,17 +21,19 @@ const macros = [envMacro, cacheMacro, retryMacro, timeoutMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, makeBase);
 
 type Out = string;
+type ReadSecretsMeta = { env: ["API_TOKEN", "HOME"]; cacheKey: "secrets:v1" };
+type FlakyMeta = { retry: { times: 4; delayMs: 100 }; timeoutMs: 1500 };
 
-const readSecrets: Step<Meta, Base, typeof macros, Out> = {
+const readSecrets: Step<Meta, Base, typeof macros, Out, ReadSecretsMeta> = {
   name: "read-secrets",
   meta: { env: ["API_TOKEN", "HOME"], cacheKey: "secrets:v1" },
   run: ({ env }) => {
-    const token = env?.API_TOKEN ?? "missing";
+    const token = env.API_TOKEN ?? "missing";
     return `secrets(${String(token).slice(0, 4)}...)`;
   },
 };
 
-const flaky: Step<Meta, Base, typeof macros, Out> = {
+const flaky: Step<Meta, Base, typeof macros, Out, FlakyMeta> = {
   name: "flaky-fetch",
   meta: { retry: { times: 4, delayMs: 100 }, timeoutMs: 1500 },
   async run() {
@@ -47,8 +49,8 @@ async function main() {
   console.log(await execute(readSecrets));
   const result = await runWithRetry(
     () => t(() => execute(flaky)),
-    flaky.meta.retry?.times,
-    flaky.meta.retry?.delayMs,
+    flaky.meta.retry.times,
+    flaky.meta.retry.delayMs,
   );
   console.log("flaky:", result);
 }

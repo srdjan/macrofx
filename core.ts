@@ -23,35 +23,44 @@ type AddedFrom<Ms extends readonly AnyMacro[], Met> = Ms extends [infer H, ...in
     & (T extends readonly AnyMacro[] ? AddedFrom<T, Met> : Record<never, never>)
   : Record<never, never>;
 
-export type Step<Met, BaseCtx, Ms extends readonly AnyMacro[], Out> = {
+export type Step<
+  Met,
+  BaseCtx,
+  Ms extends readonly AnyMacro[],
+  Out,
+  SpecificMeta extends Met = Met,
+> = {
   name: string;
-  meta: Met;
-  run: StepFn<BaseCtx & AddedFrom<Ms, Met>, Out>;
+  meta: SpecificMeta;
+  run: StepFn<BaseCtx & AddedFrom<Ms, SpecificMeta>, Out>;
 };
 
 export function createPipeline<Met extends object, BaseCtx, Ms extends readonly AnyMacro[]>(
   macros: Ms,
   makeBase: () => BaseCtx,
 ) {
-  async function execute<Out>(s: Step<Met, BaseCtx, Ms, Out>): Promise<Out> {
+  async function execute<Out, SpecificMeta extends Met>(
+    s: Step<Met, BaseCtx, Ms, Out, SpecificMeta>,
+  ): Promise<Out> {
     // 1) validate
-    const active = macros.filter((m) => m.match(s.meta));
-    for (const m of active) m.validate?.(s.meta);
+    const { meta } = s;
+    const active = macros.filter((m) => m.match(meta));
+    for (const m of active) m.validate?.(meta);
 
     // 2) resolve -> build typed capability context
     const base = makeBase();
     const added: Record<string, unknown> = {};
     for (const m of active) {
       if (m.resolve) {
-        Object.assign(added, await m.resolve(base, s.meta));
+        Object.assign(added, await m.resolve(base, meta));
       }
     }
-    const ctx = { ...base, ...added } as BaseCtx & AddedFrom<Ms, Met>;
+    const ctx = { ...base, ...added } as BaseCtx & AddedFrom<Ms, SpecificMeta>;
 
     // 3) before (guards / priming effects)
     for (const m of active) {
       if (m.before) {
-        const short = await m.before(ctx, s.meta);
+        const short = await m.before(ctx, meta);
         if (typeof short !== "undefined") return short as Out;
       }
     }
@@ -63,7 +72,7 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     } catch (err) {
       // 5) onError — first macro that returns a value “handles” the error
       for (const m of active) {
-        const v = m.onError?.(base, s.meta, err);
+        const v = m.onError?.(base, meta, err);
         if (typeof v !== "undefined") return v as Out;
       }
       throw err;
@@ -72,7 +81,7 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     // 6) after (telemetry / wrapping / transformation)
     for (const m of active) {
       if (m.after) {
-        const maybe = await m.after(ctx, s.meta, result);
+        const maybe = await m.after(ctx, meta, result);
         if (typeof maybe !== "undefined") result = maybe;
       }
     }

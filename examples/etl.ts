@@ -21,7 +21,9 @@ const windowMacro = {
 const macros = [schemaMacro, sinkMacro, windowMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, makeBase);
 
-const avgAge: Step<Meta, Base, typeof macros, { avg: number }> = {
+type AvgAgeMeta = { schema: "Person[]"; window: { size: number }; sink: "console" };
+
+const avgAge: Step<Meta, Base, typeof macros, { avg: number }, AvgAgeMeta> = {
   name: "avg-age",
   meta: { schema: "Person[]", window: { size: 2 }, sink: "console" },
   run: ({ data, emit, window }) => {

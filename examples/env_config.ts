@@ -7,7 +7,15 @@ const makeBase = (): Base => ({ serviceName: "billing" });
 const macros = [envMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, makeBase);
 
-const readConfig: Step<Meta, Base, typeof macros, { serviceName: string; dbUrl?: string }> = {
+type ConfigMeta = { env: ["DATABASE_URL"] };
+
+const readConfig: Step<
+  Meta,
+  Base,
+  typeof macros,
+  { serviceName: string; dbUrl?: string },
+  ConfigMeta
+> = {
   name: "read-config",
   meta: { env: ["DATABASE_URL"] },
   run: ({ serviceName, env }) => ({

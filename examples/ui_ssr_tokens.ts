@@ -29,7 +29,8 @@ const i18nMacro = {
 const macros = [themeMacro, i18nMacro] as const;
 const { execute } = createPipeline<Meta, Base, typeof macros>(macros, makeBase);
 
-const renderCard: Step<Meta, Base, typeof macros, string> = {
+type RenderCardMeta = { theme: "dark"; i18n: { lang: "fr" } };
+const renderCard: Step<Meta, Base, typeof macros, string, RenderCardMeta> = {
   name: "card",
   meta: { theme: "dark", i18n: { lang: "fr" } },
   run: ({ tokens, t }) =>

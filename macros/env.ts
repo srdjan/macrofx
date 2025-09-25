@@ -14,7 +14,13 @@ export const envMacro: Macro<EnvMeta, Empty, EnvAdded> = {
     };
     const g = globalThis as GlobalEnv;
     for (const k of meta.env ?? []) {
-      const v = g.Deno?.env?.get?.(k) ?? g.process?.env?.[k];
+      let v: string | undefined;
+      try {
+        v = g.Deno?.env?.get?.(k);
+      } catch (_) {
+        v = undefined;
+      }
+      if (typeof v !== "string") v = g.process?.env?.[k];
       if (typeof v === "string") out[k] = v;
     }
     return { env: out };
