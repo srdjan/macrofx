@@ -44,11 +44,16 @@ const flaky: Step<Meta, Base, typeof macros, Out, FlakyMeta> = {
 };
 
 async function main() {
-  const t = timeoutWrapper<string>(flaky.meta.timeoutMs, "flaky timeout");
+  // Execute cached step twice to show caching behavior
   console.log(await execute(readSecrets));
-  console.log(await execute(readSecrets));
+  console.log(await execute(readSecrets)); // Should be cached
+
+  // Fix: wrap timeout inside retry to handle both timeout and retry correctly
   const result = await runWithRetry(
-    () => t(() => execute(flaky)),
+    async () => {
+      const timeoutFn = timeoutWrapper<string>(flaky.meta.timeoutMs, "flaky timeout");
+      return timeoutFn(() => execute(flaky));
+    },
     flaky.meta.retry.times,
     flaky.meta.retry.delayMs,
   );

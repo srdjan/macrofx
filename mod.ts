@@ -1,5 +1,6 @@
 export * from "./core.ts";
 export * from "./helpers.ts";
+export * from "./lib/result.ts";
 
 export * from "./macros/env.ts";
 export * from "./macros/cache.ts";

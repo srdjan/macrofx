@@ -12,8 +12,23 @@ export type Macro<Meta, BaseCtx, AddedCtx> = {
 
 export type Empty = Record<PropertyKey, never>;
 
-// deno-lint-ignore no-explicit-any
-type AnyMacro = Macro<any, any, any>;
+// Performance optimization: check dev mode once at module load
+const IS_DEVELOPMENT = (() => {
+  try {
+    const g = globalThis as {
+      Deno?: { env?: { get?: (k: string) => string | undefined } };
+      process?: { env?: Record<string, string | undefined> };
+    };
+    const denoEnv = g.Deno?.env?.get?.("NODE_ENV");
+    const nodeEnv = g.process?.env?.NODE_ENV;
+    return (denoEnv ?? nodeEnv) !== "production";
+  } catch {
+    return true;
+  }
+})();
+
+// Using unknown for better type safety while maintaining flexibility
+type AnyMacro = Macro<unknown, unknown, unknown>;
 type MatchMetaOf<M> = M extends { match: (m: infer Mm) => unknown } ? Mm : unknown;
 type ResolveReturn<M> = M extends { resolve: (...args: unknown[]) => infer R } ? Awaited<R>
   : Record<never, never>;
@@ -53,25 +68,12 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     const resolved = await Promise.all(
       active.map((m) => (m.resolve ? m.resolve(base, meta) : undefined)),
     );
-    const dev = (() => {
-      try {
-        const g = globalThis as {
-          Deno?: { env?: { get?: (k: string) => string | undefined } };
-          process?: { env?: Record<string, string | undefined> };
-        };
-        const denoEnv = g.Deno?.env?.get?.("NODE_ENV");
-        const nodeEnv = g.process?.env?.NODE_ENV;
-        return (denoEnv ?? nodeEnv) !== "production";
-      } catch {
-        return true;
-      }
-    })();
     const seen = new Set<string>();
     for (let i = 0; i < active.length; i++) {
       const obj = resolved[i];
       if (!obj) continue;
       for (const k of Object.keys(obj as Record<string, unknown>)) {
-        if (dev && seen.has(k)) console.warn("macrofx: duplicate ctx key:", k);
+        if (IS_DEVELOPMENT && seen.has(k)) console.warn("macrofx: duplicate ctx key:", k);
         seen.add(k);
       }
       Object.assign(added, obj as Record<string, unknown>);
@@ -93,7 +95,8 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     } catch (err) {
       // 5) onError — first macro that returns a value “handles” the error
       for (const m of active) {
-        const v = m.onError?.(ctx as BaseCtx, meta, err);
+        // onError has access to the full context, not just BaseCtx
+        const v = m.onError?.(ctx, meta, err);
         if (typeof v !== "undefined") return v as Out;
       }
       throw err;

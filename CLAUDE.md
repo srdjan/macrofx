@@ -24,6 +24,7 @@ deno task etl       # Run ETL pipeline example
 deno task wf        # Run workflow example with auth/role/transaction macros
 deno task ui        # Run UI SSR tokenization example
 deno task testing   # Run testing utilities example
+deno task improved  # Run improved features demo (TTL cache, Result types, schemas)
 ```
 
 ## Architecture
