@@ -50,10 +50,31 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     // 2) resolve -> build typed capability context
     const base = makeBase();
     const added: Record<string, unknown> = {};
-    for (const m of active) {
-      if (m.resolve) {
-        Object.assign(added, await m.resolve(base, meta));
+    const resolved = await Promise.all(
+      active.map((m) => (m.resolve ? m.resolve(base, meta) : undefined)),
+    );
+    const dev = (() => {
+      try {
+        const g = globalThis as {
+          Deno?: { env?: { get?: (k: string) => string | undefined } };
+          process?: { env?: Record<string, string | undefined> };
+        };
+        const denoEnv = g.Deno?.env?.get?.("NODE_ENV");
+        const nodeEnv = g.process?.env?.NODE_ENV;
+        return (denoEnv ?? nodeEnv) !== "production";
+      } catch {
+        return true;
       }
+    })();
+    const seen = new Set<string>();
+    for (let i = 0; i < active.length; i++) {
+      const obj = resolved[i];
+      if (!obj) continue;
+      for (const k of Object.keys(obj as Record<string, unknown>)) {
+        if (dev && seen.has(k)) console.warn("macrofx: duplicate ctx key:", k);
+        seen.add(k);
+      }
+      Object.assign(added, obj as Record<string, unknown>);
     }
     const ctx = { ...base, ...added } as BaseCtx & AddedFrom<Ms, SpecificMeta>;
 
@@ -72,7 +93,7 @@ export function createPipeline<Met extends object, BaseCtx, Ms extends readonly 
     } catch (err) {
       // 5) onError — first macro that returns a value “handles” the error
       for (const m of active) {
-        const v = m.onError?.(base, meta, err);
+        const v = m.onError?.(ctx as BaseCtx, meta, err);
         if (typeof v !== "undefined") return v as Out;
       }
       throw err;

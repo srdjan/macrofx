@@ -14,6 +14,9 @@ export const retryMacro: Macro<RetryMeta, Empty, Empty> = {
   onError: (_base, _meta, err) => ({ __type: RETRY_SENTINEL, error: err }),
 };
 
+export const retryFromMeta = (m?: RetryMeta) => <T>(fn: () => Promise<T>) =>
+  runWithRetry(fn, m?.retry?.times ?? 1, m?.retry?.delayMs ?? 0);
+
 export async function runWithRetry<T>(
   fn: () => Promise<T>,
   times = 1,

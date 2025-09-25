@@ -10,3 +10,5 @@ export const timeoutMacro: Macro<TimeoutMeta, Empty, Empty> = {
   name: "timeout",
   match: (m) => typeof m.timeoutMs === "number",
 };
+export const timeoutFromMeta = (m?: TimeoutMeta, label?: string) => <T>(fn: () => Promise<T>) =>
+  timeoutWrapper<T>(m?.timeoutMs, label)(fn);

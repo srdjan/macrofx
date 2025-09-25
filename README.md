@@ -194,6 +194,20 @@ const simulateGame: Step<Meta, Base, typeof macros, Score> = {
 
 ## Quick Start
 
+### Helpers
+
+- Retry: `retryFromMeta(meta)` returns a function that runs with the configured retry policy.
+- Timeout: `timeoutFromMeta(meta, label?)` returns a function that runs with the configured timeout.
+- Sink (memory): `clearMemSink()` clears the in-memory sink buffer (useful for tests).
+
+Example:
+
+```ts
+const withRetry = retryFromMeta({ retry: { times: 3, delayMs: 100 } });
+const withTimeout = timeoutFromMeta({ timeoutMs: 500 }, "fetch-timeout");
+await withRetry(() => withTimeout(() => doWork()));
+```
+
 ### Install
 
 ```bash
