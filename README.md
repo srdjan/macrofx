@@ -2,7 +2,9 @@
 
 **Type-safe, metadata-driven capability injection for TypeScript/Deno.**
 
-Stop writing boilerplate. Let metadata drive your cross-cutting concerns while TypeScript ensures everything is type-safe.
+Stop writing boilerplate. Let metadata drive your cross-cutting concerns while TypeScript ensures everything is type-safe. 
+
+Inspired by https://github.com/saltyaom/elysia-typegen-example.
 
 ## The Problem
 
