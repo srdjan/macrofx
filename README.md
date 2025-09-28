@@ -4,7 +4,7 @@
 
 Stop writing boilerplate. Let metadata drive your cross-cutting concerns while TypeScript ensures everything is type-safe. 
 
-Inspired by https://github.com/saltyaom/elysia-typegen-example.
+Inspired by @saltyAom's https://github.com/saltyaom/elysia-typegen-example.
 
 ## The Problem
 
