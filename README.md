@@ -433,13 +433,86 @@ const handleRealtimeEvent: Step<Meta, Base, typeof macros, void> = {
 | Macro          | Metadata                          | Provides              | Use Case               |
 | -------------- | --------------------------------- | --------------------- | ---------------------- |
 | `envMacro`     | `env: string[]`                   | `ctx.env` object      | Environment config     |
-| `cacheMacro`   | `cacheKey: string`                | Result caching        | Expensive computations |
+| `cacheMacro`   | `cacheKey: string, cacheTTL?: number` | Result caching with TTL | Expensive computations |
 | `retryMacro`   | `retry: {times, delayMs}`         | Auto-retry logic      | Flaky operations       |
 | `timeoutMacro` | `timeoutMs: number`               | Timeout wrapper       | Long-running tasks     |
 | `sinkMacro`    | `sink: 'console' &#124; 'memory'` | `ctx.emit()` function | Event collection       |
-| `schemaMacro`  | `schema: Schema`                  | `ctx.validated` data  | Input validation       |
+| `schemaMacro`  | `schema: SchemaValidator<T>`      | `ctx.data: T`         | Type-safe validation   |
+
+**Cache enhancements**: LRU eviction, TTL support, stats tracking
+**Schema enhancements**: Generic validators, Zod integration, custom transformers
 
 Note: `retry` and `timeout` are applied via small helpers (see helpers.ts) rather than mutating your handler; check examples/cli.ts for usage.
+
+## Composition Utilities
+
+MacroFX provides powerful composition utilities to organize and scale your pipelines:
+
+### Macro Merging
+
+```typescript
+import { composeMacros, mergeMacroSets } from "macrofx";
+
+const coreMacros = [envMacro, cacheMacro] as const;
+const observabilityMacros = [logMacro, metricsMacro] as const;
+
+const allMacros = mergeMacroSets(coreMacros, observabilityMacros);
+```
+
+### Conditional Activation
+
+```typescript
+import { whenMacro, unlessMacro, alwaysMacro } from "macrofx";
+
+const onlyInProduction = whenMacro(
+  (meta) => Deno.env.get("NODE_ENV") === "production",
+  cacheMacro
+);
+
+const onlyIfFeatureEnabled = whenMacro(
+  (meta) => featureFlags.has(meta.feature),
+  newAlgorithmMacro
+);
+```
+
+### Parameterized Macros
+
+```typescript
+import { createMacroFactory, withDefaults } from "macrofx";
+
+const createLogMacro = createMacroFactory((config: { minLevel: LogLevel }) => ({
+  name: "log",
+  match: (m) => !!m.log,
+  before: (ctx, meta) => {
+    if (shouldLog(meta.log, config.minLevel)) {
+      console.log(`[${meta.log}] ${ctx.stepName}`);
+    }
+  },
+}));
+
+const productionLog = createLogMacro({ minLevel: "warn" });
+const developmentLog = createLogMacro({ minLevel: "debug" });
+```
+
+### Built-in Telemetry
+
+```typescript
+import { createTelemetryMacro, createConsoleLogger } from "macrofx";
+
+const logger = createConsoleLogger({ verbose: true });
+const telemetryMacro = createTelemetryMacro();
+
+const step: Step<Meta, Base, typeof macros, Result> = {
+  name: "my-step",
+  meta: { telemetry: logger },
+  run: (ctx) => doWork(ctx),
+};
+
+await execute(step);
+console.log("Events:", logger.getEvents());
+```
+
+**See [Composition Guide](./docs/composition-guide.md) for detailed patterns and examples.**
 
 ## Creating Custom Macros
 
@@ -547,11 +620,13 @@ const rateLimitMacro: Macro<
 Run the included examples:
 
 ```bash
-deno task cli       # CLI with env, cache, retry
-deno task etl       # ETL pipeline with windowing
-deno task wf        # Workflow with auth and transactions
-deno task ui        # SSR with theming and i18n
-deno task testing   # Deterministic test fixtures
+deno task cli         # CLI with env, cache, retry
+deno task etl         # ETL pipeline with windowing
+deno task wf          # Workflow with auth and transactions
+deno task ui          # SSR with theming and i18n
+deno task testing     # Deterministic test fixtures
+deno task improved    # Enhanced cache, Result types, schemas
+deno task composition # Macro composition patterns
 ```
 
 ## Design Principles
@@ -569,4 +644,13 @@ MIT
 
 ---
 
-**Ready to eliminate boilerplate?** Check out the [examples](./examples) or read the [core](./core.ts) (under 100 lines!).
+## Documentation
+
+- **[Getting Started Guide](./docs/getting-started.md)** - 15-minute tutorial from zero to production
+- **[Composition Guide](./docs/composition-guide.md)** - Advanced patterns and real-world examples
+- **[API Reference](./docs/api-reference.md)** - Complete API documentation
+- **[Use Cases](./use-cases.md)** - Scenario-driven guide for common problems
+- **[Blog: Meta Capabilities Part 1](./docs/meta-capabilities-part1.md)** - Declarative power without boilerplate
+- **[Blog: Meta Capabilities Part 2](./docs/meta-capabilities-part2.md)** - From prototype to production
+
+**Ready to eliminate boilerplate?** Check out the [examples](./examples) or read the [core](./core.ts) (under 120 lines!).

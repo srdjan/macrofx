@@ -8,6 +8,7 @@
     "ui": "deno run -A examples/ui_ssr_tokens.ts",
     "testing": "deno run -A examples/testing.ts",
     "improved": "deno run -A examples/improved_features.ts",
+    "composition": "deno run -A examples/composition.ts",
     "fmt": "deno fmt",
     "lint": "deno lint"
   },

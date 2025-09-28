@@ -53,11 +53,29 @@ The type system ensures that step handlers can only access context properties ad
 All macros follow the pattern of matching metadata fields and optionally adding typed context:
 
 - **env** (`env?: string[]`) - Resolves environment variables into `ctx.env` object
-- **cache** (`cacheKey?: string`) - Simple in-memory cache with `ctx.cache` Map
+- **cache** (`cacheKey?: string`, `cacheTTL?: number`) - In-memory cache with LRU eviction and TTL
 - **retry** (`retry?: {times, delayMs}`) - Returns sentinel on error, use with `runWithRetry()`
 - **timeout** (`timeoutMs?: number`) - Use with `timeoutWrapper()` helper
 - **sink** (`sink?: boolean`) - Adds `ctx.sink` array for collecting outputs
-- **schema** (`schema?: unknown`) - Toy validation, adds `ctx.validated` data
+- **schema** (`schema?: unknown`) - Generic validation with pluggable validators, adds `ctx.data`
+
+### Composition Utilities
+
+MacroFX provides utilities for organizing and composing macros:
+
+- **composeMacros(set1, set2)** - Merge two macro sets with full type inference
+- **mergeMacroSets(...sets)** - Merge multiple macro sets into one
+- **whenMacro(condition, macro)** - Conditionally activate a macro
+- **unlessMacro(condition, macro)** - Activate unless condition is true
+- **alwaysMacro(macro)** - Make a macro always match
+- **neverMacro(macro)** - Disable a macro
+- **createMacroFactory(fn)** - Create parameterized macro factories
+- **withDefaults(factory, defaults)** - Add default configuration to factories
+- **extendMacro(macro, extension)** - Extend existing macros
+- **createTelemetryMacro()** - Built-in observability and tracing
+- **createConsoleLogger(opts)** - Console-based telemetry output
+
+See `docs/composition-guide.md` for detailed examples and patterns.
 
 ### Usage Pattern
 

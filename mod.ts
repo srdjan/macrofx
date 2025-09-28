@@ -1,6 +1,9 @@
 export * from "./core.ts";
 export * from "./helpers.ts";
 export * from "./lib/result.ts";
+export * from "./lib/composition.ts";
+export * from "./lib/parameterized.ts";
+export * from "./lib/telemetry.ts";
 
 export * from "./macros/env.ts";
 export * from "./macros/cache.ts";
