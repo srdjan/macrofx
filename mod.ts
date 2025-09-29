@@ -11,3 +11,6 @@ export * from "./macros/retry.ts";
 export * from "./macros/timeout.ts";
 export * from "./macros/sink.ts";
 export * from "./macros/schema.ts";
+
+export * from "./lib/cache.ts";
+export * from "./lib/circuit_breaker.ts";
